@@ -50,7 +50,7 @@ function Counter({ to }: { to: number }) {
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
+      if (!e?.isIntersecting) return;
       io.disconnect();
       const start = performance.now();
       const tick = (t: number) => { const p = Math.min(1, (t - start) / 1200); setN(Math.round(p * to)); if (p < 1) requestAnimationFrame(tick); };
@@ -69,7 +69,7 @@ export function Stats() {
     <section className="relative z-10 border-y bg-surface">
       <div className="mx-auto grid max-w-7xl grid-cols-2 lg:grid-cols-4">
         {d.stats.map((s, idx) => {
-          const Icon = statIcons[idx];
+          const Icon = statIcons[idx] ?? Target;
           return (
             <div key={idx} className="flex items-center gap-4 border-r px-5 py-7 last:border-r-0 [&:nth-child(2)]:border-r-0 lg:[&:nth-child(2)]:border-r">
               <Icon className="h-8 w-8 shrink-0 text-primary" />

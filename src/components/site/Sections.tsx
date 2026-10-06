@@ -50,7 +50,7 @@ export function Programs() {
         <SectionHead eyebrow={d.programs.eyebrow} title={d.programs.title} />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {d.programs.items.map((p, idx) => {
-            const Icon = programIcons[idx];
+            const Icon = programIcons[idx] ?? Medal;
             return (
               <Reveal key={idx} delay={(idx % 3) * 100}>
                 <article className="card-pro group flex h-full flex-col p-7">
@@ -95,7 +95,7 @@ export function Approach() {
         <div className="relative grid gap-8 md:grid-cols-5">
           <div className="absolute left-0 right-0 top-8 hidden h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent md:block" />
           {d.approach.steps.map((s, idx) => {
-            const Icon = stepIcons[idx];
+            const Icon = stepIcons[idx] ?? Target;
             return (
               <Reveal key={idx} delay={idx * 120} className="relative text-center">
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-2 border-primary bg-background text-primary">
@@ -123,7 +123,7 @@ export function WhyUs() {
         <SectionHead eyebrow={d.why.eyebrow} title={d.why.title} />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {d.why.items.map((w, idx) => {
-            const Icon = whyIcons[idx];
+            const Icon = whyIcons[idx] ?? Award;
             return (
               <Reveal key={idx} delay={(idx % 4) * 90}>
                 <div className="card-pro h-full p-6">
