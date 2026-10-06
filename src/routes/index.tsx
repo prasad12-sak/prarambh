@@ -1,24 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Toaster } from "@/components/ui/sonner";
+import { LangProvider } from "@/lib/i18n";
+import { Navbar } from "@/components/site/Navbar";
+import { Hero, Stats } from "@/components/site/Hero";
+import { About, Achievers, Approach, Batches, CtaBand, Programs, WhyUs } from "@/components/site/Sections";
+import { Contact, FinalCta, Footer, Gallery, ScrollTop, Testimonials } from "@/components/site/Interactive";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+const title = "Prarambh Physical Academy | Physical Training for Police, Army & All Forces";
+const description =
+  "Prarambh Physical Academy provides professional physical training for Police Bharti, Army, Forest, BSF, CRPF, SRPF, Agniveer and other force recruitments.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <LangProvider>
+      <Navbar />
+      <main>
+        <Hero />
+        <Stats />
+        <About />
+        <Programs />
+        <Approach />
+        <WhyUs />
+        <Batches />
+        <CtaBand />
+        <Achievers />
+        <Testimonials />
+        <Gallery />
+        <Contact />
+        <FinalCta />
+      </main>
+      <Footer />
+      <ScrollTop />
+      <Toaster />
+    </LangProvider>
   );
 }
