@@ -9,7 +9,7 @@ export function Reveal({ children, delay = 0, className }: { children: ReactNode
     if (!el) return;
     const io = new IntersectionObserver(
       ([e]) => {
-        if (e.isIntersecting) {
+        if (e?.isIntersecting) {
           setShown(true);
           io.disconnect();
         }
