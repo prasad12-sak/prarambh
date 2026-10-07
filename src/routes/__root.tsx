@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import logo from "@/assets/logo.png";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -81,7 +82,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Prarambh Physical Academy" },
       { name: "description", content: "Physical training academy for Police, Army and all force recruitments." },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: logo },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: logo },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -91,7 +94,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: logo, type: "image/png" },
+      { rel: "apple-touch-icon", href: logo },
     ],
   }),
   shellComponent: RootShell,

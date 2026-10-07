@@ -11,9 +11,9 @@ export function About() {
         <Reveal>
           <div className="relative mx-auto max-w-sm">
             <div className="absolute -inset-3 -z-0 rounded-2xl border-2 border-primary/40 translate-x-4 translate-y-4" />
-            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-surface">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-surface shadow-lg ring-1 ring-primary/10">
               {site.director.photo ? (
-                <img src={site.director.photo} alt={site.director.name} className="h-full w-full object-cover" loading="lazy" />
+                <img src={site.director.photo} alt={site.director.name} className="h-full w-full object-cover object-center" loading="lazy" />
               ) : (
                 <div className="grid h-full place-items-center text-muted-foreground"><User className="h-28 w-28" strokeWidth={1} /></div>
               )}
@@ -28,7 +28,6 @@ export function About() {
           <p className="eyebrow">{d.director.eyebrow}</p>
           <h2 className="mt-3 font-display text-4xl font-bold uppercase md:text-5xl">{d.director.title}</h2>
           <div className="mt-4 h-1 w-16 bg-primary" />
-          <p className="mt-6 text-sm text-muted-foreground"><strong className="text-foreground">{d.director.qual}:</strong> {site.director.qualification}</p>
           <blockquote className="mt-6 border-l-4 border-primary pl-6 text-lg leading-relaxed text-foreground/90">“{d.director.message}”</blockquote>
           <div className="mt-8">
             <div className="font-display text-3xl italic text-primary">{site.director.name}</div>
@@ -213,8 +212,12 @@ export function Achievers() {
           {a.items.map((s, idx) => (
             <Reveal key={idx} delay={idx * 100} className="w-[78%] shrink-0 snap-center md:w-auto">
               <div className="card-pro h-full overflow-hidden text-center">
-                <div className="relative grid aspect-square place-items-center bg-surface text-muted-foreground">
-                  <User className="h-24 w-24" strokeWidth={1} />
+                <div className="relative grid aspect-square place-items-center overflow-hidden bg-surface text-muted-foreground">
+                  {s.image ? (
+                    <img src={s.image} alt={s.name} className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <User className="h-24 w-24" strokeWidth={1} />
+                  )}
                   <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-gradient-primary text-primary-foreground"><BadgeCheck className="h-5 w-5" /></span>
                 </div>
                 <div className="p-5">

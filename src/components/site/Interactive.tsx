@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Facebook, Instagram, Mail, MapPin, MessageCircle, Phone, Play, Quote, Clock, Youtube, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,7 +22,45 @@ export function Testimonials() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Review>({ name: "", force: "", rating: 5, review: "" });
   const [err, setErr] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
   useEffect(() => setExtra(loadReviews()), []);
+
+  const all = [...extra, ...d.testimonials.items];
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!all.length || !isVisible) return;
+    const id = window.setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % all.length);
+    }, 3000);
+    return () => window.clearInterval(id);
+  }, [all.length, isVisible]);
+
+  useEffect(() => {
+    const activeItem = itemRefs.current[activeIndex];
+    if (!activeItem) return;
+    activeItem.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeIndex, all.length]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,27 +72,35 @@ export function Testimonials() {
     toast.success(f.thanks);
   };
 
-  const all = [...extra, ...d.testimonials.items];
   const input = "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary";
 
   return (
-    <section id="testimonials" className="py-24">
+    <section ref={sectionRef} id="testimonials" className="py-24">
       <div className="mx-auto max-w-7xl px-4 lg:px-6">
         <SectionHead eyebrow={d.testimonials.eyebrow} title={d.testimonials.title} />
-        <div className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
-          {all.map((r, idx) => (
-            <Reveal key={idx} delay={(idx % 3) * 100} className="w-[85%] shrink-0 snap-center md:w-auto">
-              <figure className="card-pro flex h-full flex-col p-7">
-                <Quote className="h-8 w-8 text-primary/60" />
-                <Stars n={r.rating} />
-                <blockquote className="mt-4 flex-1 text-foreground/90">“{r.review}”</blockquote>
-                <figcaption className="mt-6 border-t pt-4">
-                  <div className="font-display text-lg font-bold uppercase">— {r.name}</div>
-                  <div className="text-xs text-muted-foreground">{r.force}</div>
-                </figcaption>
-              </figure>
-            </Reveal>
-          ))}
+        <div ref={trackRef} className="relative overflow-hidden">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:mx-0 md:gap-8 md:px-0 [&::-webkit-scrollbar]:hidden">
+            {all.map((r, idx) => {
+              const isActive = idx === activeIndex;
+              const isNearby = Math.abs((idx - activeIndex + all.length) % all.length) <= 1;
+
+              return (
+                <Reveal key={idx} delay={(idx % 3) * 100} className={cn("w-[85%] shrink-0 snap-center transition-all duration-500 ease-out md:w-[30rem]", isActive ? "scale-100 opacity-100" : isNearby ? "scale-90 opacity-80" : "scale-75 opacity-60") }>
+                  <div ref={(el) => { itemRefs.current[idx] = el; }} className="h-full">
+                    <figure className="card-pro flex h-full flex-col p-7">
+                      <Quote className="h-8 w-8 text-primary/60" />
+                      <Stars n={r.rating} />
+                      <blockquote className="mt-4 flex-1 text-foreground/90">“{r.review}”</blockquote>
+                      <figcaption className="mt-6 border-t pt-4">
+                        <div className="font-display text-lg font-bold uppercase">— {r.name}</div>
+                        <div className="text-xs text-muted-foreground">{r.force}</div>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
         </div>
         <div className="mt-10 text-center">
           <button onClick={() => setOpen(true)} className="btn-outline">{d.testimonials.write}</button>
@@ -88,14 +134,72 @@ export function Testimonials() {
   );
 }
 
+const getVideoThumbnail = async (videoUrl: string) => {
+  if (typeof document === "undefined") return videoUrl;
+
+  return await new Promise<string>((resolve) => {
+    const media = document.createElement("video");
+    media.preload = "metadata";
+    media.muted = true;
+    media.playsInline = true;
+    media.src = videoUrl;
+
+    const fallback = () => resolve(videoUrl);
+    media.onloadeddata = () => {
+      try {
+        media.currentTime = 0.1;
+      } catch {
+        fallback();
+      }
+    };
+
+    media.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 360;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        fallback();
+        return;
+      }
+
+      ctx.drawImage(media, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+
+    media.onerror = fallback;
+  });
+};
+
 export function Gallery() {
   const { d } = useLang();
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
   const [showAll, setShowAll] = useState(false);
   const [video, setVideo] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  const [videoThumbs, setVideoThumbs] = useState<Record<string, string>>({});
   const items = site.gallery.filter((g) => filter === "all" || g.type === filter);
   const shown = showAll ? items : items.slice(0, 6);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadThumbs = async () => {
+      const videoItems = site.gallery.filter((g): g is typeof g & { type: "video"; videoUrl: string } => g.type === "video" && !!g.videoUrl);
+      const nextThumbs: Record<string, string> = {};
+
+      for (const item of videoItems) {
+        const thumb = await getVideoThumbnail(item.videoUrl);
+        if (!cancelled) nextThumbs[item.videoUrl] = thumb;
+      }
+
+      if (!cancelled) setVideoThumbs(nextThumbs);
+    };
+
+    void loadThumbs();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <section id="gallery" className="bg-ink py-24">
@@ -108,17 +212,21 @@ export function Gallery() {
           ))}
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-          {shown.map((g, idx) => (
-            <button key={idx} onClick={() => (g.type === "video" ? setVideo(g.videoUrl!) : setPhoto(g.src))}
-              className={cn("group relative overflow-hidden rounded-lg", idx === 0 && "md:col-span-2 md:row-span-2")}>
-              <img src={g.src} alt={g.alt} loading="lazy" className="aspect-[4/3] h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/80 to-transparent opacity-70" />
-              {g.type === "video" && (
-                <span className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-lg"><Play className="ml-0.5 h-6 w-6 fill-current" /></span>
-              )}
-              <span className="absolute bottom-3 left-3 text-left text-sm font-medium">{g.alt}</span>
-            </button>
-          ))}
+          {shown.map((g, idx) => {
+            const mediaSrc = g.type === "video" ? (videoThumbs[g.videoUrl ?? ""] ?? g.src) : g.src;
+
+            return (
+              <button key={idx} onClick={() => (g.type === "video" ? setVideo(g.videoUrl!) : setPhoto(g.src))}
+                className={cn("group relative overflow-hidden rounded-lg", idx === 0 && "md:col-span-2 md:row-span-2")}>
+                <img src={mediaSrc} alt={g.alt} loading="lazy" className="aspect-[4/3] h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/80 to-transparent opacity-70" />
+                {g.type === "video" && (
+                  <span className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-lg"><Play className="ml-0.5 h-6 w-6 fill-current" /></span>
+                )}
+                <span className="absolute bottom-3 left-3 text-left text-sm font-medium">{g.alt}</span>
+              </button>
+            );
+          })}
         </div>
         {items.length > 6 && !showAll && (
           <div className="mt-10 text-center"><button onClick={() => setShowAll(true)} className="btn-outline">{d.gallery.all}</button></div>
@@ -130,7 +238,12 @@ export function Gallery() {
       <Dialog open={!!video} onOpenChange={(o) => !o && setVideo(null)}>
         <DialogContent className="max-w-3xl bg-popover p-2">
           <DialogTitle className="sr-only">Video</DialogTitle>
-          {video && <iframe src={video} title="Academy video" className="aspect-video w-full rounded" allow="autoplay; encrypted-media" allowFullScreen />}
+          {video && (
+            <video key={video} controls autoPlay playsInline poster={videoThumbs[video] ?? undefined} className="aspect-video w-full rounded bg-black" preload="metadata">
+              <source src={video} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          )}
         </DialogContent>
       </Dialog>
       <Dialog open={!!photo} onOpenChange={(o) => !o && setPhoto(null)}>
@@ -148,7 +261,7 @@ export function Contact() {
   const c = d.contact;
   const rows = [
     [MapPin, c.address, site.address], [Phone, c.phone, site.phone], [MessageCircle, c.whatsapp, `+${site.whatsappNumber}`],
-    [Mail, c.email, site.email], [Navigation, c.location, site.trainingLocation], [Clock, c.hours, site.hours],
+    [Mail, c.email, site.email], [Clock, c.hours, site.hours],
   ] as const;
   return (
     <section id="contact" className="py-24">
@@ -163,8 +276,23 @@ export function Contact() {
                   <div><div className="text-xs uppercase tracking-wider text-muted-foreground">{l}</div><div className="mt-0.5 font-medium">{v}</div></div>
                 </div>
               ))}
+              <div className="flex gap-3 sm:col-span-2">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary/12 text-primary"><Navigation className="h-5 w-5" /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">{c.location}</div>
+                  <div className="mt-1 flex flex-col gap-1.5">
+                    {site.trainingLocations.map((loc) => (
+                      <a key={loc.label} href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.query)}`} target="_blank" rel="noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {loc.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row">
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.mapsQuery)}`} target="_blank" rel="noreferrer" className="btn-outline flex-1 !px-3">{c.directions}</a>
+                <a href={site.directionsUrl} target="_blank" rel="noreferrer" className="btn-outline flex-1 !px-3">{c.directions}</a>
                 <a href={`tel:${site.phone}`} className="btn-outline flex-1 !px-3">{c.call}</a>
                 <a href={whatsappLink()} target="_blank" rel="noreferrer" className="btn-primary flex-1 !px-3">{c.wa}</a>
               </div>
@@ -172,7 +300,7 @@ export function Contact() {
           </Reveal>
           <Reveal delay={150}>
             <iframe title="Academy location map" loading="lazy" className="h-full min-h-80 w-full rounded-xl border grayscale-[60%] invert-[90%] hue-rotate-180"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(site.mapsQuery)}&output=embed`} />
+              src={site.mapEmbedUrl} />
           </Reveal>
         </div>
       </div>

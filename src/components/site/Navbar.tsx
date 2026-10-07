@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
-import { Menu, Shield, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { whatsappLink } from "@/config/site";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
 
 export const sectionIds = ["home", "about", "programs", "why", "batches", "achievers", "testimonials", "gallery", "contact"] as const;
 
 export function Logo() {
   return (
     <a href="#home" className="flex items-center gap-2.5">
-      <span className="grid h-10 w-10 place-items-center rounded-md bg-gradient-primary text-primary-foreground">
-        <Shield className="h-5 w-5" strokeWidth={2.5} />
-      </span>
+      <img src={logo} alt="Prarambh logo" className="h-10 w-10 rounded-md object-cover ring-1 ring-white/10" />
       <span className="font-display leading-none">
         <span className="block text-lg font-bold uppercase tracking-wide">Prarambh</span>
         <span className="block text-[0.65rem] uppercase tracking-[0.25em] text-muted-foreground">Physical Academy</span>
